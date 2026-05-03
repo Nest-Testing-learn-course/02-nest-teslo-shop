@@ -4,7 +4,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 
-async function bootstrap() {
+export async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const logger = new Logger('Bootstrap');
 
@@ -16,7 +16,7 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
-    })
+    }),
   );
 
   const config = new DocumentBuilder()
@@ -27,8 +27,9 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
+  const PORT = process.env.PORT ?? 3000;
 
-  await app.listen(process.env.PORT);
-  logger.log(`App running on port ${ process.env.PORT }`);
+  await app.listen(PORT);
+  logger.log(`App running on port ${PORT}`);
 }
-bootstrap();
+void bootstrap();
