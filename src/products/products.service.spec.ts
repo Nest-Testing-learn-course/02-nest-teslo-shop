@@ -7,6 +7,7 @@ import { User } from '../auth/entities/user.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { PaginationDto } from 'src/common/dtos/pagination.dto';
+import { UpdateProductDto } from './dto/update-product.dto';
 
 describe('ProductsService', () => {
   let service: ProductsService;
@@ -14,13 +15,24 @@ describe('ProductsService', () => {
   let productImageRepository: Repository<ProductImage>;
 
   beforeEach(async () => {
+    const mockQueryBuilder = {
+      where: jest.fn(() => mockQueryBuilder),
+      leftJoinAndSelect: jest.fn(() => mockQueryBuilder),
+      getOne: jest.fn().mockResolvedValue({
+        id: 'valid-uuid',
+        title: 'Test Product 1',
+        slug: 'test-product-1',
+        images: [{ id: 1, url: 'test.jpg' }],
+      }),
+    };
+
     const mockProductRepository = {
       create: jest.fn(),
       save: jest.fn(),
       find: jest.fn(),
       count: jest.fn(),
       findOneBy: jest.fn(),
-      createQueryBuilder: jest.fn(),
+      createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
       findOne: jest.fn(),
       preload: jest.fn(),
       remove: jest.fn(),
@@ -188,5 +200,68 @@ describe('ProductsService', () => {
     await expect(service.findOne(productId)).rejects.toThrow(
       `Product with ${productId} not found`,
     );
+  });
+
+  it('should return product by slug', async () => {
+    const slug = 'test-product';
+
+    const product = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      title: 'Test Product',
+    } as Product;
+
+    jest.spyOn(productRepository, 'findOneBy').mockResolvedValue(product);
+
+    const result = await service.findOne(slug);
+
+    expect(result).toEqual({
+      id: 'valid-uuid',
+      title: 'Test Product 1',
+      slug: 'test-product-1',
+      images: [{ id: 1, url: 'test.jpg' }],
+    });
+  });
+
+  it('should throw NotFoundException if product not found (update)', async () => {
+    const id = '1';
+    const dto = {} as UpdateProductDto;
+    const user = {} as User;
+
+    jest.spyOn(productRepository, 'preload').mockResolvedValue(null);
+
+    await expect(service.update(id, dto, user)).rejects.toThrow(
+      new NotFoundException(`Product with id: ${id} not found`),
+    );
+  });
+
+  it('should update a product successfully', async () => {
+    const id = '1';
+
+    const dto = {
+      title: 'updates product',
+      slug: 'updates-product',
+    } as UpdateProductDto;
+
+    const user = {
+      id: '123e4567-e89b-12d3-a456-426614174000',
+      fullName: 'Test User',
+    } as User;
+
+    const product = {
+      ...dto,
+      price: 100,
+      description: 'some description',
+    } as unknown as Product;
+
+    jest.spyOn(productRepository, 'preload').mockResolvedValue(product);
+
+    const updatedProduct = await service.update(id, dto, user);
+
+    expect(updatedProduct).toEqual({
+      id: 'valid-uuid',
+      title: 'Test Product 1',
+      slug: 'test-product-1',
+      images: ['test.jpg'],
+    });
   });
 });
