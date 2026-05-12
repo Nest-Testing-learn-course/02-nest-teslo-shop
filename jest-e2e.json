@@ -3,10 +3,10 @@
   "rootDir": ".",
   "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
-  "testPathIgnorePatterns": ["<rootDir>/postgres"],
-  "watchPathIgnorePatterns": ["<rootDir>/postgres"],
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
-  "coverageDirectory": "./coverage/e2e"
+  "coverageDirectory": "coverage-e2e",
+  "testPathIgnorePatterns": ["<rootDir>/node_modules/", "<rootDir>/postgres"],
+  "watchPathIgnorePatterns": ["<rootDir>/postgres"]
 }
